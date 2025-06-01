@@ -16,12 +16,14 @@ public class NoteEntity  {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int noteId;
 
+/*
     @Size(min = 5,message = "The tile must be more than 5 letter")
+*/
     private String title;
 
     private String content;
 
-    @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL,targetEntity = UserEntity.class)
+    @ManyToOne(fetch = FetchType.EAGER,cascade = CascadeType.PERSIST,targetEntity = UserEntity.class)
     @JoinColumn(name = "user_id",referencedColumnName = "userId",nullable = true)
     @JsonIgnore
     private UserEntity userEntity;

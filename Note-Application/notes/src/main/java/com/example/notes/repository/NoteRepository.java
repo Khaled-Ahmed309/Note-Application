@@ -9,7 +9,7 @@ import java.util.List;
 @Repository
 public interface NoteRepository extends JpaRepository<NoteEntity,Integer> {
 
-    List<NoteEntity> findByNoteId(int noteId);
+    NoteEntity findByNoteId(int noteId);
     List<NoteEntity> findByUserEntity_UserId(int userId);
 
 }
