@@ -41,9 +41,9 @@ public class UserEntity {
     @JsonIgnore
     private Set<NoteEntity> notes;
 
-    /*@OneToOne(mappedBy = "userEntity",fetch = FetchType.EAGER,cascade = CascadeType.ALL,targetEntity = Roles.class)
+    @OneToOne(fetch = FetchType.EAGER,cascade = CascadeType.ALL,targetEntity = Roles.class)
     @JoinColumn(name = "role_id",referencedColumnName = "role_id")
-    private Roles roles;*/
+    private Roles roles;
 
 
 }

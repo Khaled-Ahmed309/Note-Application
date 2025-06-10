@@ -14,6 +14,7 @@ public class NoteEntity  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonIgnore
     private int noteId;
 
 /*
