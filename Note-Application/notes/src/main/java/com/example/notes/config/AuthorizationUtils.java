@@ -14,7 +14,6 @@ public class AuthorizationUtils {
 
     UserRepository userRepo;
 
-    Authentication authentication;
     public boolean canCurrentUserAccessNote(NoteEntity note,Authentication authentication){
 
         String loggedUserEmail=authentication.getName();

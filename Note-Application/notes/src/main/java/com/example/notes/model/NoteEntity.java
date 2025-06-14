@@ -10,7 +10,7 @@ import lombok.Setter;
 @Table(name = "notes")
 @Getter
 @Setter
-public class NoteEntity  {
+public class NoteEntity extends BaseEntity  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

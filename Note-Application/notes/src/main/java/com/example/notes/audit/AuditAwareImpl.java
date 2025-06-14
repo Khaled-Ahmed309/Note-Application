@@ -1,6 +1,7 @@
 package com.example.notes.audit;
 
 import org.springframework.data.domain.AuditorAware;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -9,6 +10,6 @@ import java.util.Optional;
 public class AuditAwareImpl implements AuditorAware<String> {
     @Override
     public Optional<String> getCurrentAuditor() {
-        return Optional.of("Khaled");
+        return Optional.of(SecurityContextHolder.getContext().getAuthentication().getName());
     }
 }
