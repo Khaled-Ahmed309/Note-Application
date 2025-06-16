@@ -1,13 +1,14 @@
 package com.example.notes.controller;
 
 import com.example.notes.config.AuthorizationUtils;
+import com.example.notes.dto.NoteDTO;
 import com.example.notes.model.NoteEntity;
 import com.example.notes.model.UserEntity;
 import com.example.notes.repository.NoteRepository;
 import com.example.notes.repository.UserRepository;
-import com.example.notes.response.Response;
 import com.example.notes.service.MyUserDetailsService;
 import com.example.notes.service.NoteService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,60 +55,49 @@ public class NoteController {
     //Create the note
 
     @PostMapping("/saveNote")
-    public ResponseEntity<Response> saveNote(@Valid @RequestBody NoteEntity note, Authentication authentication) {
-        Response response=new Response();
+    public ResponseEntity<?> saveNote(@Valid @RequestBody NoteDTO noteDTO, Authentication authentication) {
         String user_email=authentication.getName();
-        UserEntity user=userRepository.findByEmail(user_email);
-
-        note.setUserEntity(user);
-        noteService.saveNote(note);
-        response.setStatusMsg("Saved successfully");
-        response.setStatusCode("200");
+        noteService.saveNote(noteDTO,user_email);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .header("Invocation from: ","saveNote")
-                .body(response);
+                .body("Successfully save your note");
 
     }
 
     //Delete the note
     @DeleteMapping("/deleteNote")
-    public ResponseEntity<Response> deleteNote(@RequestParam("noteId") int noteId,Authentication authentication) {
-        Response response = new Response();
+    public ResponseEntity<?> deleteNote(@RequestParam("noteId") int noteId,Authentication authentication) {
         NoteEntity note = noteRepository.findByNoteId(noteId);
-
         boolean isNoteOwner = authorizationUtils.canCurrentUserAccessNote(note, authentication);
         if (isNoteOwner) {
-            return noteService.deleteNote(note);
-        } else {
-            response.setStatusCode("405");
-            response.setStatusMsg("You are not Allowed to delete this note");
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .header("Invocation from ", "delete note")
-                    .body(response);
-
+            noteService.deleteNote(note);
+            return ResponseEntity.status(HttpStatus.OK).body("Deleting note successfully");
         }
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body("You are not Allowed to delete the note");
+
     }
 
     //Updated the note
-    @PostMapping("/updateNote")
-    public ResponseEntity<Response> updateNote(@RequestParam("noteId") int noteId,
-                              @RequestBody NoteEntity noteEntity,Authentication authentication) {
-        Response response = new Response();
+    @PostMapping("/updateNote/{id}")
+    public ResponseEntity<?> updateNote(@PathVariable("id") int noteId,
+                                        @RequestBody NoteDTO noteDTO, Authentication authentication, HttpSession httpSession) {
         NoteEntity note = noteRepository.findByNoteId(noteId);
-        boolean isNoteOwner = authorizationUtils.canCurrentUserAccessNote(note, authentication);
-
-        if (isNoteOwner) {
-            return noteService.updateNote(noteEntity, note);
-        } else {
-            response.setStatusCode("400");
-            response.setStatusMsg("You are not allow to update this note");
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .header("Invocation from ", "Updated note")
-                    .body(response);
+        httpSession.setAttribute("noteInformation", note);
+        if (noteDTO != null && note != null) {
+            boolean isNoteOwner = authorizationUtils.canCurrentUserAccessNote(note, authentication);
+            if (isNoteOwner) {
+                noteService.updateNote(noteDTO, httpSession);
+                return ResponseEntity.status(HttpStatus.ACCEPTED).body("Updated note successfully");
+            } else {
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body("Error you are not allow to updated this note");
+            }
         }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Error happening");
     }
 
 }

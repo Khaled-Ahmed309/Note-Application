@@ -21,8 +21,4 @@ public class SubBaseEntity {
     @Column(updatable = false)
     private LocalDateTime created_date;
 
-    @CreatedBy
-    @Column(updatable = false)
-    private String  created_by;
-
 }

@@ -13,7 +13,7 @@ public class AuthorizationUtils {
     @Autowired
     UserRepository userRepo;
 
-    public boolean canCurrentUserAccessNote(NoteEntity note,Authentication authentication){
+    public boolean canCurrentUserAccessNote(NoteEntity  note,Authentication authentication){
 
         String loggedUserEmail=authentication.getName();
         UserEntity currentUser=userRepo.findByEmail(loggedUserEmail);
