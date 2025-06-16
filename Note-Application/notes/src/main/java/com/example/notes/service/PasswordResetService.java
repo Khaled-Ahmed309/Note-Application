@@ -1,8 +1,11 @@
 package com.example.notes.service;
 
+import com.example.notes.dto.UserDTO;
 import com.example.notes.model.PasswordResetToken;
 import com.example.notes.model.UserEntity;
 import com.example.notes.repository.TokenRepository;
+import com.example.notes.repository.UserRepository;
+import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,21 +22,60 @@ public class PasswordResetService {
 
     @Autowired
     private JavaMailSender javaMailSender;
+
     @Autowired
     TokenRepository tokenRepository;
 
+    @Autowired
+    UserRepository userRepository;
+
     @Value("${app.reset.password.url}")
-     private  String resetPasswordBaseUrl;
+    private String resetPasswordBaseUrl;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    @Transactional
-    public String sendEmail(UserEntity user) {
-        try {
-            String resetLink = generateToken(user);
-            SimpleMailMessage msg = new SimpleMailMessage();
+    PasswordResetToken resetToken = new PasswordResetToken();
 
+
+    public boolean verifyEmail(HttpSession httpSession) {
+        UserEntity user = (UserEntity) httpSession.getAttribute("userInformation");
+        httpSession.getAttribute("userInformation");
+        return user != null;
+    }
+
+    @Transactional
+    public void saveTokenInDB(HttpSession httpSession) {
+        try {
+
+            String token = generateToken();
+            UserEntity user= (UserEntity) httpSession.getAttribute("userInformation");
+            LocalDateTime currentDateTime = LocalDateTime.now();
+            LocalDateTime expiryDateTime = currentDateTime.plusMinutes(15);// time which the token will end
+            resetToken.setUser(user);
+            resetToken.setExpiryDateTime(expiryDateTime);
+            resetToken.setToken(token);
+            tokenRepository.save(resetToken);
+        } catch (Exception e) {
+            throw new RuntimeException("Error while creating the code.");
+        }
+    }
+
+
+    @Transactional
+    public String generateToken() {
+        UUID uuid = UUID.randomUUID(); // the token which is used.
+        return uuid.toString();
+
+    }
+
+    @Transactional
+    public void sendEmail(HttpSession httpSession) {
+        try {
+
+            UserEntity user=(UserEntity) httpSession.getAttribute("userInformation");
+            String resetLink = resetPasswordBaseUrl + "/" + resetToken.getToken();
+            SimpleMailMessage msg = new SimpleMailMessage();
             msg.setFrom(fromEmail);
             msg.setTo(user.getEmail());
             msg.setSubject("Reset Your Password");
@@ -43,40 +85,27 @@ public class PasswordResetService {
                     + "If you didn't request this, you can ignore this email.\n\n"
                     + "Best regards,\nYour App Team");
             javaMailSender.send(msg);
-            return "Success";
-        }catch (Exception ex){
-            ex.printStackTrace();
-            return "Error";
+        } catch (Exception ex) {
+            throw new RuntimeException("Error while sending to your email");
         }
     }
 
-    @Transactional
-    public String generateToken(UserEntity user){
-        UUID uuid=UUID.randomUUID(); // the token which is used.
-        LocalDateTime currentDateTime=LocalDateTime.now();
-        LocalDateTime expiryDateTime=LocalDateTime.now().plusMinutes(15);// time which the token will end
 
-        PasswordResetToken resetToken=new PasswordResetToken();
-        resetToken.setUser(user);
-        resetToken.setExpiryDateTime(expiryDateTime);
-        resetToken.setToken(uuid.toString());
-        tokenRepository.save(resetToken);
-        return resetPasswordBaseUrl+"/"+resetToken.getToken();
+    public boolean NotExpired(LocalDateTime expiryDateTime) {
 
-    }
-
-    public boolean hasExpired(LocalDateTime  expiryDateTime){
-
-        LocalDateTime currentDateTime=LocalDateTime.now();
-        return expiryDateTime.isBefore(currentDateTime);
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        return expiryDateTime.isAfter(currentDateTime);
 
     }
 
 
+    public boolean verifyToken(String token,HttpSession httpSession) {
+        PasswordResetToken resetToken = tokenRepository.findByToken(token);
+        httpSession.setAttribute("TokenInformation",resetToken);
+        UserEntity user = (UserEntity) httpSession.getAttribute("userInformation");
 
-
-
-
-
+        return resetToken != null && resetToken.getUser().getUserId() == user.getUserId();
+    }
 
 }
+

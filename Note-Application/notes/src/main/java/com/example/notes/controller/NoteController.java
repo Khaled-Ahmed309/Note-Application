@@ -6,8 +6,10 @@ import com.example.notes.model.UserEntity;
 import com.example.notes.repository.NoteRepository;
 import com.example.notes.repository.UserRepository;
 import com.example.notes.response.Response;
+import com.example.notes.service.MyUserDetailsService;
 import com.example.notes.service.NoteService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 
+@Slf4j
 @RestController
 @RequestMapping(path = "/api/notes",produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
 
@@ -33,6 +36,8 @@ public class NoteController {
     NoteRepository noteRepository;
 
     @Autowired
+    MyUserDetailsService userDetailsService;
+    @Autowired
     AuthorizationUtils authorizationUtils;
 
     // Retrieve the notes
@@ -41,6 +46,7 @@ public class NoteController {
 
         String user_email=authentication.getName();
         UserEntity user=userRepository.findByEmail(user_email);
+        log.info("The user name and email: {}",userDetailsService.loadUserByUsername(user_email));
         return noteRepository.findByUserEntity(user);
     }
 

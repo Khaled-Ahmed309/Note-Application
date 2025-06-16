@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 public class AuthorizationUtils {
 
     @Autowired
-
     UserRepository userRepo;
 
     public boolean canCurrentUserAccessNote(NoteEntity note,Authentication authentication){
