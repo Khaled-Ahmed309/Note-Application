@@ -35,7 +35,7 @@ public class NotesApplicationUsernamePassword implements AuthenticationProvider 
         {
             return new UsernamePasswordAuthenticationToken(user,null,getAuthorities(user.getRoles()));
         }
-            throw  new BadCredentialsException("Invalid credentials, password or username is incorrect");
+            throw  new BadCredentialsException("Invalid credentials");
 
 
     }

@@ -34,7 +34,6 @@ public class ProjectSecurityConfig {
                                 .requestMatchers("/api/notes/**").hasAnyRole("ADMIN","USER")
                                 .requestMatchers("/auth/**").permitAll()
                                 .requestMatchers("/api/register").permitAll()
-                                .requestMatchers("/api/**").permitAll()
                                 .anyRequest().authenticated()).authenticationProvider(authProvider)
                 .sessionManagement(sess->sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.formLogin(Customizer.withDefaults());
