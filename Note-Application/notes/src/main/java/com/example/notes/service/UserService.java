@@ -1,54 +1,121 @@
 package com.example.notes.service;
 
 
+import com.example.notes.dto.NoteDTO;
+import com.example.notes.dto.UserDTO;
 import com.example.notes.model.NoteEntity;
+import com.example.notes.model.PasswordResetToken;
 import com.example.notes.model.UserEntity;
 import com.example.notes.repository.NoteRepository;
+import com.example.notes.repository.TokenRepository;
 import com.example.notes.repository.UserRepository;
-import com.example.notes.response.Response;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
+
+@Slf4j
 @Service
 public class UserService {
 
-    @Autowired
-    UserRepository userRepository;
 
-    @Autowired
-    NoteRepository noteRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final NoteRepository noteRepository;
+    private final TokenRepository tokenRepository;
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, NoteRepository noteRepository, TokenRepository tokenRepository){
 
-    public boolean saveUser(UserEntity userEntity){
+        this.userRepository=userRepository;
+        this.passwordEncoder=passwordEncoder;
+        this.noteRepository=noteRepository;
+        this.tokenRepository=tokenRepository;
+    }
 
-        if (userEntity!=null){
-          userRepository.save(userEntity);
-          return true;
+    public List<NoteDTO> myNote() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = auth.getName();
+        UserEntity user = userRepository.findByEmail(userEmail);
+        List<NoteEntity> notes = noteRepository.findByUserEntity_UserId(user.getUserId());
+
+        if (notes.isEmpty()) {
+            throw new RuntimeException("There are no notes. Please add a note to see it here.");
         }
-        return false;
-    }
+        List<NoteDTO> noteDTOs=new ArrayList<>();
 
-    //Get the user's notes
-    public List<NoteEntity> userNote(int user_id){
-        Optional<UserEntity> user=userRepository.findById(user_id);
-        if (user.isPresent()){
-            return noteRepository.findByUserEntity_UserId(user_id);
+        for (NoteEntity note:notes){
+            NoteDTO noteDTO=new NoteDTO();
+            noteDTO.setContent(note.getContent());
+            noteDTO.setTitle(note.getTitle());
+            noteDTOs.add(noteDTO);
         }
-        return List.of();
-    }
-
-    public ResponseEntity<Response> register(UserEntity user){
-        Response response=new Response();
-        userRepository.save(user);
-        response.setStatusCode("200");
-        response.setStatusMsg("The email is saved successfully");
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(response);
+        return noteDTOs;
 
     }
+
+
+    public void register(UserDTO userDTO){
+        try {
+            UserEntity user = new UserEntity();
+            user.setName(userDTO.getName());
+            user.setEmail(userDTO.getEmail());
+            user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+            userRepository.save(user);
+
+        }catch (Exception e){
+            throw new RuntimeException("Error while your registration");
+        }
+    }
+
+
+
+    public void changeProfile( UserDTO user) {
+        try {
+            Authentication auth=SecurityContextHolder.getContext().getAuthentication();
+            String currentEmailUser = auth.getName();
+
+            UserEntity user1 = userRepository.findByEmail(currentEmailUser);
+            log.info("User name is: {}", user1.getName());
+            if (user.getName() != null) {
+                user1.setName(user.getName());
+            }
+            if (user.getEmail() != null) {
+                user1.setEmail(user.getEmail());
+            }
+            if (user.getPassword() != null) {
+                user1.setPassword(passwordEncoder.encode(user.getPassword()));
+            }
+            userRepository.save(user1);
+        }catch (Exception ex){
+            log.error("Error while updating profile", ex);
+            throw new RuntimeException("Something went wrong while updating the profile");
+        }
+    }
+    public void removeUser(int id){
+        UserEntity user=userRepository.findByUserId(id);
+        List<PasswordResetToken> tokens=tokenRepository.findByUser(user);
+        List<NoteEntity> notes=noteRepository.findByUserEntity(user);
+        if (user!=null){
+            if (!notes.isEmpty()) {
+                for (NoteEntity note:notes){
+                    note.setUserEntity(null);
+                    noteRepository.delete(note);
+                }
+            }
+            if (!tokens.isEmpty()){
+               for (PasswordResetToken token:tokens){
+                   token.setUser(null);
+                   tokenRepository.delete(token);
+               }
+            }
+            userRepository.delete(user);
+        }else {
+            throw new RuntimeException("Error, user is not found");
+        }
+    }
+
+
 }

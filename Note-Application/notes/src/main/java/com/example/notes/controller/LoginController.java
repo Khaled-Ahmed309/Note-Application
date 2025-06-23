@@ -11,30 +11,32 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
+@CrossOrigin(origins = "*")
 public class LoginController {
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    //immutable
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtilService jwtUtil;
 
-    @Autowired
-    private JwtUtilService jwtUtil;
+    public LoginController(JwtUtilService jwtUtil, AuthenticationManager authenticationManager){
+        this.jwtUtil=jwtUtil;
+        this.authenticationManager = authenticationManager;
+    }
 
-    @Autowired
-    private UserRepository userRepository;
+
+
 
     @PostMapping("/login")
-    public ResponseEntity<?> login (@RequestBody LoginRequest loginRequest, LoginResponse loginResponse){
+    public ResponseEntity<?> login (@RequestBody LoginRequest loginRequest){
         Authentication auth=authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),loginRequest.getPassword()));
         UserEntity user= (UserEntity) auth.getPrincipal();
         String token =jwtUtil.generateToken(user);
-        loginResponse.setToken(token);
+        LoginResponse loginResponse=new LoginResponse(token);
         return ResponseEntity.ok(loginResponse);
     }
+
 
 }

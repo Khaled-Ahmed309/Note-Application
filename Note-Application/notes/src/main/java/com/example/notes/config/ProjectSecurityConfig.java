@@ -1,8 +1,6 @@
 package com.example.notes.config;
 
-
 import com.example.notes.security.NotesApplicationUsernamePassword;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,42 +12,62 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
 public class ProjectSecurityConfig {
 
-    @Autowired
-    private JwtFilter jwtFilter;
+    private final JwtFilter jwtFilter;
+    private final NotesApplicationUsernamePassword authProvider;
 
-    @Autowired
-    private NotesApplicationUsernamePassword authProvider;
-
-    @Bean
-    SecurityFilterChain defaultsecurityFilterChain(HttpSecurity http) throws Exception{
-
-        http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(
-                        request->request
-                                .requestMatchers("/api/notes/**").hasAnyRole("ADMIN","USER")
-                                .requestMatchers("/auth/**").permitAll()
-                                .requestMatchers("/api/register").permitAll()
-                                .anyRequest().authenticated()).authenticationProvider(authProvider)
-                .sessionManagement(sess->sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        http.formLogin(Customizer.withDefaults());
-        http.httpBasic(Customizer.withDefaults());
-
-        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-        return http.build();
-
+    public ProjectSecurityConfig(NotesApplicationUsernamePassword authProvider, JwtFilter jwtFilter) {
+        this.authProvider = authProvider;
+        this.jwtFilter = jwtFilter;
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http ) throws Exception{
+    SecurityFilterChain defaultsecurityFilterChain(HttpSecurity http) throws Exception {
+        http.cors(Customizer.withDefaults()) // ← تمكين CORS
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(request -> request
+                        .requestMatchers("/api/notes/**").hasAnyRole("ADMIN", "USER")
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/api/register").permitAll()
+                        .requestMatchers("/api/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .authenticationProvider(authProvider)
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        http.formLogin(Customizer.withDefaults());
+        http.httpBasic(Customizer.withDefaults());
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
         return http.getSharedObject(AuthenticationManagerBuilder.class)
                 .authenticationProvider(authProvider)
                 .build();
     }
 
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5500/**")); // <-- رابط الـ Frontend
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setAllowCredentials(true);
 
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 }

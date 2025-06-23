@@ -1,54 +1,62 @@
 package com.example.notes.service;
 
+import com.example.notes.config.AuthorizationUtils;
+import com.example.notes.dto.NoteDTO;
 import com.example.notes.model.NoteEntity;
+import com.example.notes.model.UserEntity;
 import com.example.notes.repository.NoteRepository;
-import com.example.notes.response.Response;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import com.example.notes.repository.UserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class NoteService {
 
-    @Autowired
-    NoteRepository noteRepository;
+     private final NoteRepository noteRepository;
+     private final UserRepository userRepository;
 
+     public NoteService(NoteRepository noteRepository,UserRepository userRepository){
+         this.noteRepository=noteRepository;
+         this.userRepository=userRepository;
+     }
 
+    public void createNote(NoteDTO noteDTO) {
 
-    public NoteEntity saveNote(NoteEntity note){
+        try {
+            Authentication auth= SecurityContextHolder.getContext().getAuthentication();
+            String userEmail=auth.getName();
+            UserEntity user = userRepository.findByEmail(userEmail);
+            NoteEntity note = new NoteEntity();
+            note.setTitle(noteDTO.getTitle());
+            note.setContent(noteDTO.getContent());
+            note.setUserEntity(user);
+            noteRepository.save(note);
+        } catch (Exception e) {
+            throw new RuntimeException("Error while save your note");
+        }
 
-       return noteRepository.save(note);
     }
 
-   public ResponseEntity<Response> deleteNote(NoteEntity  note){
-        Response response=new Response();
-        noteRepository.delete(note);
-        response.setStatusMsg("Deleted note Successfully");
-        response.setStatusCode("200");
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .header("Invocation from","delete note")
-                .body(response);
 
+   public void deleteNote(int  noteId){
+         NoteEntity note = noteRepository.findByNoteId(noteId);
+        try {
+            note.setUserEntity(null);
+            noteRepository.delete(note);
+        } catch (Exception e) {
+            throw new RuntimeException("Error while deleting your note ");
+        }
     }
 
-    public ResponseEntity<Response> updateNote(NoteEntity newNote,NoteEntity oldNote){
-
-        Response response =new Response();
-            if (newNote.getTitle() != null) {
-                oldNote.setTitle(newNote.getTitle());
+    public void editeNote(int notId, NoteDTO noteDTO) {
+        NoteEntity note = noteRepository.findByNoteId(notId);
+            if (noteDTO.getTitle() != null) {
+                note.setTitle(noteDTO.getTitle());
             }
-            if (newNote.getContent() != null) {
-                oldNote.setContent(newNote.getContent());
+            if (noteDTO.getContent() != null) {
+                note.setContent(noteDTO.getContent());
             }
-            noteRepository.save(oldNote);
-            response.setStatusCode("205");
-            response.setStatusMsg("Updated successfully");
-            return ResponseEntity
-                    .status(HttpStatus.ACCEPTED)
-                    .header("Invocation from ","Update note")
-                    .body(response);
-
+            noteRepository.save(note);
     }
 }

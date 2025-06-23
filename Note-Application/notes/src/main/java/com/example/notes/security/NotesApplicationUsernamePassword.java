@@ -4,7 +4,6 @@ package com.example.notes.security;
 import com.example.notes.model.Roles;
 import com.example.notes.model.UserEntity;
 import com.example.notes.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,11 +20,14 @@ import java.util.List;
 @Component
 public class NotesApplicationUsernamePassword implements AuthenticationProvider {
 
-    @Autowired
-    UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    PasswordEncoder passwordEncoder;
+    public NotesApplicationUsernamePassword(PasswordEncoder passwordEncoder, UserRepository userRepository) {
+        this.passwordEncoder = passwordEncoder;
+        this.userRepository = userRepository;
+    }
+
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         String email=authentication.getName();
@@ -35,7 +37,7 @@ public class NotesApplicationUsernamePassword implements AuthenticationProvider 
         {
             return new UsernamePasswordAuthenticationToken(user,null,getAuthorities(user.getRoles()));
         }
-            throw  new BadCredentialsException("Invalid credentials");
+            throw new BadCredentialsException("Invalid credentials, password or username is incorrect");
 
 
     }

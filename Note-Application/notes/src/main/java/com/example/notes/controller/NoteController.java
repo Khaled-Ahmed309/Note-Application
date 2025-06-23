@@ -1,107 +1,78 @@
 package com.example.notes.controller;
 
 import com.example.notes.config.AuthorizationUtils;
-import com.example.notes.model.NoteEntity;
-import com.example.notes.model.UserEntity;
-import com.example.notes.repository.NoteRepository;
-import com.example.notes.repository.UserRepository;
-import com.example.notes.response.Response;
+import com.example.notes.dto.NoteDTO;
 import com.example.notes.service.NoteService;
+import com.example.notes.service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 
+@Slf4j
 @RestController
 @RequestMapping(path = "/api/notes",produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
+@CrossOrigin(origins = "*")
 
 public class NoteController {
 
 
-    @Autowired
-    NoteService noteService;
-    @Autowired
-    UserRepository userRepository;
+    private final NoteService noteService;
+    private final UserService userService;
+    private final AuthorizationUtils authorizationUtils;
 
-    @Autowired
-    NoteRepository noteRepository;
-
-    @Autowired
-    AuthorizationUtils authorizationUtils;
+    public NoteController(NoteService noteService,UserService userService,AuthorizationUtils authorizationUtils){
+        this.noteService=noteService;
+        this.userService=userService;
+        this.authorizationUtils=authorizationUtils;
+    }
 
     // Retrieve the notes
     @GetMapping("/getNote")
-    public List<NoteEntity> getNotes(Authentication authentication) {
+    public List<NoteDTO> getNote() {
 
-        String user_email=authentication.getName();
-        UserEntity user=userRepository.findByEmail(user_email);
-        return noteRepository.findByUserEntity(user);
+        return userService.myNote();
     }
 
 
     //Create the note
 
     @PostMapping("/saveNote")
-    public ResponseEntity<Response> saveNote(@Valid @RequestBody NoteEntity note, Authentication authentication) {
-        Response response=new Response();
-        String user_email=authentication.getName();
-        UserEntity user=userRepository.findByEmail(user_email);
-
-        note.setUserEntity(user);
-        noteService.saveNote(note);
-        response.setStatusMsg("Saved successfully");
-        response.setStatusCode("200");
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .header("Invocation from: ","saveNote")
-                .body(response);
-
+    public ResponseEntity<?> saveNote(@Valid @RequestBody NoteDTO noteDTO) {
+        noteService.createNote(noteDTO);
+        return ResponseEntity.status(HttpStatus.OK).body("Successfully save your note");
     }
 
     //Delete the note
-    @DeleteMapping("/deleteNote")
-    public ResponseEntity<Response> deleteNote(@RequestParam("noteId") int noteId,Authentication authentication) {
-        Response response = new Response();
-        NoteEntity note = noteRepository.findByNoteId(noteId);
-
-        boolean isNoteOwner = authorizationUtils.canCurrentUserAccessNote(note, authentication);
-        if (isNoteOwner) {
-            return noteService.deleteNote(note);
-        } else {
-            response.setStatusCode("405");
-            response.setStatusMsg("You are not Allowed to delete this note");
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .header("Invocation from ", "delete note")
-                    .body(response);
-
+    @DeleteMapping("/deleteNote/{id}")
+    public ResponseEntity<?> deleteNote(@PathVariable(name = "id") int noteId) {
+        if (noteId>0&&authorizationUtils.canCurrentUserAccessNote(noteId)) {
+            noteService.deleteNote(noteId);
+            return ResponseEntity.status(HttpStatus.OK).body("Deleting note successfully");
         }
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body("You are not Allowed to delete the note");
+
     }
 
     //Updated the note
-    @PostMapping("/updateNote")
-    public ResponseEntity<Response> updateNote(@RequestParam("noteId") int noteId,
-                              @RequestBody NoteEntity noteEntity,Authentication authentication) {
-        Response response = new Response();
-        NoteEntity note = noteRepository.findByNoteId(noteId);
-        boolean isNoteOwner = authorizationUtils.canCurrentUserAccessNote(note, authentication);
-
-        if (isNoteOwner) {
-            return noteService.updateNote(noteEntity, note);
-        } else {
-            response.setStatusCode("400");
-            response.setStatusMsg("You are not allow to update this note");
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .header("Invocation from ", "Updated note")
-                    .body(response);
+    @PostMapping("/updateNote/{id}")
+    public ResponseEntity<?> updateNote(@PathVariable("id") int noteId, @RequestBody NoteDTO noteDTO) throws Exception {
+        if (noteId>=0 &&authorizationUtils.canCurrentUserAccessNote(noteId)){
+            noteService.editeNote(noteId,noteDTO);
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body("Updated note successfully");
         }
+        else
+            throw new Exception("Error you are not allow to updated this note");
+
+
     }
 
 }

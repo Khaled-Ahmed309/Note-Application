@@ -2,8 +2,6 @@ package com.example.notes.controller;
 
 
 import com.example.notes.dto.UserDTO;
-import com.example.notes.model.UserEntity;
-import com.example.notes.service.MyUserDetailsService;
 import com.example.notes.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,14 +16,16 @@ import org.springframework.web.bind.annotation.*;
 public class UserUpdateController {
 
 
-    @Autowired
-    UserService userService;
+   private final UserService userService;
+
+   public UserUpdateController(UserService userService){
+       this.userService=userService;
+   }
 
 
     @PostMapping("/updateMyProfile")
-    public ResponseEntity<?> updateMyProfile(@RequestBody @Valid UserDTO user, Authentication authentication){
-        userService.changeProfile(user,authentication);
-
+    public ResponseEntity<?> updateMyProfile(@RequestBody @Valid UserDTO user){
+        userService.changeProfile(user);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("Updated profile successfully");
     }
 
