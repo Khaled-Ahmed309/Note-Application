@@ -14,15 +14,13 @@ public class UserPrinciple implements UserDetails {
 
     @Getter
     private UserEntity user;
-//    Roles roles;
 
     public UserPrinciple(UserEntity user){
         this.user=user;
     }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(
-                new SimpleGrantedAuthority("ROLE_"+user.getRoles().getRole_name())
+        return List.of(new SimpleGrantedAuthority("ROLE_"+user.getRoles().getRole_name())
         );
     }
 

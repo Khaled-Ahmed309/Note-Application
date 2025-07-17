@@ -14,51 +14,47 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(path = "/api", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+@RequestMapping(path = "/api/auth", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
 public class ResetPasswordController {
 
     private final PasswordResetService passwordResetService;
 
-    public ResetPasswordController(PasswordResetService passwordResetService){
-        this.passwordResetService=passwordResetService;
+    public ResetPasswordController(PasswordResetService passwordResetService) {
+        this.passwordResetService = passwordResetService;
     }
 
-
-    @PostMapping("/forget_password")
-    public ResponseEntity<?> forgetPasswordProcess(@RequestBody UserDTO userDTO, HttpSession httpSession) {
-
-        if (passwordResetService.isUserFound(userDTO,httpSession)) {
-            passwordResetService.saveTokenInDB(httpSession);
-            passwordResetService.sendEmail(httpSession);
-            return ResponseEntity.status(HttpStatus.OK).body("The code was sent to your email, Check your email: " + userDTO.getEmail());
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> processForgotPassword(@RequestBody UserDTO userDTO, HttpSession session) {
+        if (passwordResetService.isUserFound(userDTO, session)) {
+            passwordResetService.saveTokenInDB(session);
+            passwordResetService.sendEmail(session);
+            return ResponseEntity.ok("A reset code was sent to your email: " + userDTO.getEmail());
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Email Not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Email not found");
     }
 
-    @PostMapping("/resetPassword/{token}")
-    public ResponseEntity<?> resetPasswordForm(@PathVariable String token, HttpSession httpSession) {
-
-        if (passwordResetService.verifyToken(token, httpSession)) {
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body("The code is correct and valid");
+    @PostMapping("/verify-reset-token/{token}")
+    public ResponseEntity<?> verifyResetToken(@PathVariable String token, HttpSession session) {
+        if (passwordResetService.verifyToken(token, session)) {
+            return ResponseEntity.ok("Token is valid");
         }
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("The code is incorrect or invalid");
-
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid or expired token");
     }
 
-    @PostMapping("/updatePassword")
-    public ResponseEntity<?> updatePassword(@RequestBody @Valid PasswordDTO passwordDTO, HttpSession httpSession) {
-        UserEntity user = (UserEntity) httpSession.getAttribute("userInformation");
-        PasswordResetToken resetToken = (PasswordResetToken) httpSession.getAttribute("TokenInformation");
-        if (user != null &&
-                resetToken.getToken() != null && !(resetToken.isUsed()) &&
+    @PostMapping("/update-password")
+    public ResponseEntity<?> updatePassword(@Valid @RequestBody PasswordDTO passwordDTO, HttpSession session) {
+        UserEntity user = (UserEntity) session.getAttribute("userInformation");
+        PasswordResetToken resetToken = (PasswordResetToken) session.getAttribute("TokenInformation");
+
+        if (user != null && resetToken != null &&
+                resetToken.getToken() != null && !resetToken.isUsed() &&
                 resetToken.getUser().getEmail().equals(user.getEmail()) &&
                 passwordResetService.NotExpired(resetToken.getExpiryDateTime())) {
-            passwordResetService.saveNewPassword(passwordDTO,httpSession);
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body("Updated password accepted");
-        } else {
-            throw new RuntimeException("Error is found");
+
+            passwordResetService.saveNewPassword(passwordDTO, session);
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body("Password updated successfully");
         }
 
-
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Reset password conditions not met");
     }
 }

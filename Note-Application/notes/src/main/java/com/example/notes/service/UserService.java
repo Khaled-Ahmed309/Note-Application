@@ -1,6 +1,7 @@
 package com.example.notes.service;
 
 
+import com.example.notes.dto.NameDTO;
 import com.example.notes.dto.NoteDTO;
 import com.example.notes.dto.UserDTO;
 import com.example.notes.model.NoteEntity;
@@ -15,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -40,9 +42,8 @@ public class UserService {
         String userEmail = auth.getName();
         UserEntity user = userRepository.findByEmail(userEmail);
         List<NoteEntity> notes = noteRepository.findByUserEntity_UserId(user.getUserId());
-
         if (notes.isEmpty()) {
-            throw new RuntimeException("There are no notes. Please add a note to see it here.");
+            return Arrays.asList();
         }
         List<NoteDTO> noteDTOs=new ArrayList<>();
 
@@ -72,23 +73,15 @@ public class UserService {
 
 
 
-    public void changeProfile( UserDTO user) {
+    public void changeName(NameDTO nameDTO) {
         try {
             Authentication auth=SecurityContextHolder.getContext().getAuthentication();
             String currentEmailUser = auth.getName();
 
-            UserEntity user1 = userRepository.findByEmail(currentEmailUser);
-            log.info("User name is: {}", user1.getName());
-            if (user.getName() != null) {
-                user1.setName(user.getName());
-            }
-            if (user.getEmail() != null) {
-                user1.setEmail(user.getEmail());
-            }
-            if (user.getPassword() != null) {
-                user1.setPassword(passwordEncoder.encode(user.getPassword()));
-            }
-            userRepository.save(user1);
+            UserEntity user = userRepository.findByEmail(currentEmailUser);
+            user.setName(nameDTO.toString());
+
+            userRepository.save(user);
         }catch (Exception ex){
             log.error("Error while updating profile", ex);
             throw new RuntimeException("Something went wrong while updating the profile");

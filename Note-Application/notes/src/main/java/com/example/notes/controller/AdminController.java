@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RequestMapping(path = "/api/admin",produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
 @RestController
 public class AdminController {
@@ -23,13 +25,13 @@ public class AdminController {
         this.userService=userService;
     }
 
-    @DeleteMapping("/deleteUser/{id}")
+    @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable(name="id") int userId){
         if (authorizationUtils.canCurrentDeleteUser()) {
             userService.removeUser(userId);
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body("Removed user id: "+userId+" successfully");
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("message", "User deleted successfully", "userId", userId));
         }
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Your are not allow to delete the user");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error","You are not allowed to delete the user"));
 
     }
 }

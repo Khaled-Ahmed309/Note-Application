@@ -17,7 +17,7 @@ import java.util.Optional;
 
 @Slf4j
 @RestController
-@RequestMapping(path = "/api/notes",produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
+@RequestMapping(path = "/api/v1/notes",produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
 @CrossOrigin(origins = "*")
 
 public class NoteController {
@@ -34,27 +34,26 @@ public class NoteController {
     }
 
     // Retrieve the notes
-    @GetMapping("/getNote")
-    public List<NoteDTO> getNote() {
-
-        return userService.myNote();
+    @GetMapping
+    public ResponseEntity<?> getNote() {
+        List<NoteDTO> notes=userService.myNote();
+        return ResponseEntity.ok(notes);
     }
 
 
     //Create the note
-
-    @PostMapping("/saveNote")
+    @PostMapping
     public ResponseEntity<?> saveNote(@Valid @RequestBody NoteDTO noteDTO) {
         noteService.createNote(noteDTO);
-        return ResponseEntity.status(HttpStatus.OK).body("Successfully save your note");
+        return ResponseEntity.status(HttpStatus.CREATED).body("Note saved successfully.");
     }
 
     //Delete the note
-    @DeleteMapping("/deleteNote/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteNote(@PathVariable(name = "id") int noteId) {
         if (noteId>0&&authorizationUtils.canCurrentUserAccessNote(noteId)) {
             noteService.deleteNote(noteId);
-            return ResponseEntity.status(HttpStatus.OK).body("Deleting note successfully");
+            return ResponseEntity.ok("Note deleted successfully.");
         }
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
@@ -63,14 +62,14 @@ public class NoteController {
     }
 
     //Updated the note
-    @PostMapping("/updateNote/{id}")
-    public ResponseEntity<?> updateNote(@PathVariable("id") int noteId, @RequestBody NoteDTO noteDTO) throws Exception {
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateNote(@PathVariable("id") int noteId, @RequestBody NoteDTO noteDTO) {
         if (noteId>=0 &&authorizationUtils.canCurrentUserAccessNote(noteId)){
             noteService.editeNote(noteId,noteDTO);
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body("Updated note successfully");
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body("Note updated successfully.");
         }
-        else
-            throw new Exception("Error you are not allow to updated this note");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not allowed to update this note.");
+
 
 
     }

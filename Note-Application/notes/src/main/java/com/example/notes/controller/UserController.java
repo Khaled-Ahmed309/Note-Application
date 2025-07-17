@@ -1,21 +1,20 @@
 package com.example.notes.controller;
 
 
-import com.example.notes.config.AuthorizationUtils;
 import com.example.notes.dto.UserDTO;
-import com.example.notes.model.UserEntity;
-import com.example.notes.response.Response;
+
 import com.example.notes.service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
-@RequestMapping(path = "/api",produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
+@RequestMapping(path = "/api/v1/users",produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
 public class UserController {
 
    private final UserService userService;
@@ -26,7 +25,9 @@ public class UserController {
    @PostMapping("/register")
    public ResponseEntity<?> createUser(@RequestBody  @Valid UserDTO userDTO){
        userService.register(userDTO);
-       return ResponseEntity.status(HttpStatus.ACCEPTED).body("Your registration is successfully");
+       Map<String, String> response=new HashMap<>();
+       response.put("Message","Registration successful.");
+       return ResponseEntity.status(HttpStatus.CREATED).body(response);
    }
 
 

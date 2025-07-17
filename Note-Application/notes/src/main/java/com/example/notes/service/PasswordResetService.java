@@ -8,8 +8,6 @@ import com.example.notes.repository.TokenRepository;
 import com.example.notes.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -40,8 +38,7 @@ public class PasswordResetService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    PasswordResetToken resetToken = new PasswordResetToken();
-
+//    PasswordResetToken resetToken = new PasswordResetToken();
 
     public boolean isUserFound(UserDTO userDTO, HttpSession httpSession) {
         UserEntity user = userRepository.findByEmail(userDTO.getEmail());
@@ -59,10 +56,13 @@ public class PasswordResetService {
             UserEntity user = (UserEntity) httpSession.getAttribute("userInformation");
             LocalDateTime currentDateTime = LocalDateTime.now();
             LocalDateTime expiryDateTime = currentDateTime.plusMinutes(15);// time which the token will end
+
+            PasswordResetToken resetToken = new PasswordResetToken();
             resetToken.setUser(user);
             resetToken.setExpiryDateTime(expiryDateTime);
             resetToken.setToken(token);
             tokenRepository.save(resetToken);
+            httpSession.setAttribute("TokenInformation",resetToken);
         } catch (Exception e) {
             throw new RuntimeException("Error while creating the code.");
         }
@@ -80,8 +80,15 @@ public class PasswordResetService {
     public void sendEmail(HttpSession httpSession) {
         try {
 
+            PasswordResetToken resetToken =(PasswordResetToken) httpSession.getAttribute("TokenInformation");
             UserEntity user = (UserEntity) httpSession.getAttribute("userInformation");
+
+            if (user==null||resetToken==null){
+                throw new IllegalStateException("Missing user or token information in session");
+
+            }
             String resetLink = resetPasswordBaseUrl + "/" + resetToken.getToken();
+
             SimpleMailMessage msg = new SimpleMailMessage();
             msg.setFrom(fromEmail);
             msg.setTo(user.getEmail());
@@ -108,15 +115,22 @@ public class PasswordResetService {
 
     public boolean verifyToken(String token, HttpSession httpSession) {
         PasswordResetToken resetToken = tokenRepository.findByToken(token);
+        if (resetToken==null){
+            return false;
+        }
+        UserEntity user = resetToken.getUser();
+        httpSession.setAttribute("userInformation", user);
         httpSession.setAttribute("TokenInformation", resetToken);
-        UserEntity user = (UserEntity) httpSession.getAttribute("userInformation");
-
-        return resetToken != null && resetToken.getUser().getUserId() == user.getUserId();
+        return true;
     }
 
     public void saveNewPassword(PasswordDTO passwordDTO, HttpSession httpSession) {
         try {
             UserEntity user = (UserEntity) httpSession.getAttribute("userInformation");
+            PasswordResetToken resetToken =(PasswordResetToken) httpSession.getAttribute("TokenInformation");
+            if (user == null||resetToken==null) {
+                throw new IllegalStateException("Session expired or invalid");
+            }
             user.setPassword(passwordEncoder.encode(passwordDTO.getPassword()));
             userRepository.save(user);
             resetToken.setUsed(true);

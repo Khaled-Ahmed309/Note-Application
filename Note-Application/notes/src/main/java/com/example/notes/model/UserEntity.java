@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.DynamicInsert;
 
 import java.util.Set;
 
@@ -16,6 +17,7 @@ import java.util.Set;
 @Getter
 @Setter
 @Table(name = "users")
+@DynamicInsert
 public class UserEntity extends BaseEntity{
 
     @Id
@@ -33,7 +35,6 @@ public class UserEntity extends BaseEntity{
 
     @NotBlank(message = "Password must not be blank")
     @Size(min = 5,message = "Name must be at least 5 characters long")
-//    @JsonIgnore
     private String password;
 
     @OneToMany(mappedBy = "userEntity", fetch = FetchType.LAZY,
