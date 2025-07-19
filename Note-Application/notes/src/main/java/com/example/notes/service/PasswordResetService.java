@@ -1,5 +1,6 @@
 package com.example.notes.service;
 
+
 import com.example.notes.dto.PasswordDTO;
 import com.example.notes.dto.UserDTO;
 import com.example.notes.model.PasswordResetToken;
@@ -40,29 +41,32 @@ public class PasswordResetService {
 
 //    PasswordResetToken resetToken = new PasswordResetToken();
 
-    public boolean isUserFound(UserDTO userDTO, HttpSession httpSession) {
+    public boolean isUserFound(UserDTO userDTO,HttpSession session) {
         UserEntity user = userRepository.findByEmail(userDTO.getEmail());
-        httpSession.setAttribute("userInformation", user);
+        session.setAttribute("userInformation", user);
 
         return user != null;
 
     }
 
+    public  String token=generateToken();
+
     @Transactional
-    public void saveTokenInDB(HttpSession httpSession) {
+    public void saveTokenInDB(UserDTO userDTO) {
         try {
 
-            String token = generateToken();
-            UserEntity user = (UserEntity) httpSession.getAttribute("userInformation");
             LocalDateTime currentDateTime = LocalDateTime.now();
             LocalDateTime expiryDateTime = currentDateTime.plusMinutes(15);// time which the token will end
 
             PasswordResetToken resetToken = new PasswordResetToken();
+
+            UserEntity user=userRepository.findByEmail(userDTO.getEmail());
+
             resetToken.setUser(user);
             resetToken.setExpiryDateTime(expiryDateTime);
             resetToken.setToken(token);
+
             tokenRepository.save(resetToken);
-            httpSession.setAttribute("TokenInformation",resetToken);
         } catch (Exception e) {
             throw new RuntimeException("Error while creating the code.");
         }
@@ -77,17 +81,11 @@ public class PasswordResetService {
     }
 
     @Transactional
-    public void sendEmail(HttpSession httpSession) {
+    public void sendEmail(UserDTO userDTO) {
         try {
 
-            PasswordResetToken resetToken =(PasswordResetToken) httpSession.getAttribute("TokenInformation");
-            UserEntity user = (UserEntity) httpSession.getAttribute("userInformation");
-
-            if (user==null||resetToken==null){
-                throw new IllegalStateException("Missing user or token information in session");
-
-            }
-            String resetLink = resetPasswordBaseUrl + "/" + resetToken.getToken();
+            UserEntity user = userRepository.findByEmail(userDTO.getEmail());
+            String resetLink = resetPasswordBaseUrl + "/" + token;
 
             SimpleMailMessage msg = new SimpleMailMessage();
             msg.setFrom(fromEmail);
@@ -113,15 +111,30 @@ public class PasswordResetService {
     }
 
 
-    public boolean verifyToken(String token, HttpSession httpSession) {
-        PasswordResetToken resetToken = tokenRepository.findByToken(token);
-        if (resetToken==null){
+    public boolean verifyToken(String token, HttpSession session, PasswordDTO passwordDTO) {
+        if (token==null){
             return false;
         }
-        UserEntity user = resetToken.getUser();
-        httpSession.setAttribute("userInformation", user);
-        httpSession.setAttribute("TokenInformation", resetToken);
-        return true;
+        PasswordResetToken resetToken=tokenRepository.findByToken(token);
+        if (resetToken==null){
+            return false;
+        }else {
+            UserEntity user= (UserEntity) session.getAttribute("userInformation");
+            if (resetToken.getUser().getUserId()== user.getUserId() &&
+                    NotExpired(resetToken.getExpiryDateTime())&&
+                    !resetToken.isUsed()){
+                user.setPassword(passwordEncoder.encode(passwordDTO.getPassword()));
+                userRepository.save(user);
+                resetToken.setUsed(true);
+                tokenRepository.delete(resetToken);
+                return true;
+            }else {
+//                throw new RuntimeException("Error while updating your new password");
+                return false;
+
+            }
+
+        }
     }
 
     public void saveNewPassword(PasswordDTO passwordDTO, HttpSession httpSession) {

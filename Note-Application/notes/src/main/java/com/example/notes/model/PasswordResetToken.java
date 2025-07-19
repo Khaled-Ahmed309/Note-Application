@@ -20,8 +20,8 @@ public class PasswordResetToken extends SubBaseEntity{
     @Column(name = "expirydatetime")
     private LocalDateTime expiryDateTime;
 
-    @OneToOne(fetch = FetchType.EAGER,cascade = CascadeType.ALL)
-    @JoinColumn(name = "user_id",referencedColumnName = "userId")
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id",referencedColumnName = "userId",nullable = false)
     private UserEntity user;
     private boolean used = false;
 }

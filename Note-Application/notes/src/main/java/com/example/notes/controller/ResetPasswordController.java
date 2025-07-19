@@ -1,10 +1,8 @@
 package com.example.notes.controller;
 
+
 import com.example.notes.dto.PasswordDTO;
 import com.example.notes.dto.UserDTO;
-import com.example.notes.model.PasswordResetToken;
-import com.example.notes.model.UserEntity;
-
 import com.example.notes.service.PasswordResetService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -25,36 +23,20 @@ public class ResetPasswordController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> processForgotPassword(@RequestBody UserDTO userDTO, HttpSession session) {
-        if (passwordResetService.isUserFound(userDTO, session)) {
-            passwordResetService.saveTokenInDB(session);
-            passwordResetService.sendEmail(session);
+        if (passwordResetService.isUserFound(userDTO,session)) {
+            passwordResetService.saveTokenInDB(userDTO);
+            passwordResetService.sendEmail(userDTO);
             return ResponseEntity.ok("A reset code was sent to your email: " + userDTO.getEmail());
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Email not found");
     }
 
-    @PostMapping("/verify-reset-token/{token}")
-    public ResponseEntity<?> verifyResetToken(@PathVariable String token, HttpSession session) {
-        if (passwordResetService.verifyToken(token, session)) {
-            return ResponseEntity.ok("Token is valid");
-        }
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid or expired token");
-    }
-
-    @PostMapping("/update-password")
-    public ResponseEntity<?> updatePassword(@Valid @RequestBody PasswordDTO passwordDTO, HttpSession session) {
-        UserEntity user = (UserEntity) session.getAttribute("userInformation");
-        PasswordResetToken resetToken = (PasswordResetToken) session.getAttribute("TokenInformation");
-
-        if (user != null && resetToken != null &&
-                resetToken.getToken() != null && !resetToken.isUsed() &&
-                resetToken.getUser().getEmail().equals(user.getEmail()) &&
-                passwordResetService.NotExpired(resetToken.getExpiryDateTime())) {
-
-            passwordResetService.saveNewPassword(passwordDTO, session);
+    @PostMapping("/reset-password/{token}")
+    public ResponseEntity<?> verifyResetToken(@PathVariable(name = "token") String token,
+                                              @Valid @RequestBody PasswordDTO passwordDTO, HttpSession session) {
+        if (passwordResetService.verifyToken(token,session,passwordDTO)) {
             return ResponseEntity.status(HttpStatus.ACCEPTED).body("Password updated successfully");
         }
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Reset password conditions not met");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid or expired token");
     }
 }
