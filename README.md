@@ -44,6 +44,12 @@ The **Notes Management API** is a backend-only system built with Java Spring Boo
 ![Screenshot 2025-06-17 011534](https://github.com/user-attachments/assets/5fe8c978-237b-4938-a09e-afa84b9ee267)
 
 ---
+## 🔐 Forgot Password API Example
+
+This is an example of sending a POST request to the `/api/auth/forgot-password` endpoint using Postman.  
+After sending the email, you'll receive a reset code sent to your email address.
+
+![Forgot Password API Example](Screenshot%202025-07-17%20224852.png)
 
 ## 🔗 Open Resources
 
