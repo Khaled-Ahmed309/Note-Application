@@ -1,9 +1,5 @@
 
-
-### ✅ README Section (Docker-Only Setup)
-
-```markdown
-# Notes Management API
+# Notes Management API (Dockerized)
 
 The **Notes Management API** is a backend-only system built with Java Spring Boot. It provides RESTful APIs that allow users and admins to create, update, delete, and view notes, with advanced security features such as JWT authentication, profile updates, and password resets.
 
@@ -37,25 +33,23 @@ The **Notes Management API** is a backend-only system built with Java Spring Boo
 ### 📁 Folder Structure
 
 ```
-
 Note-Application/
 └── notes/
-├── Dockerfile
-├── docker-compose.yml
-├── src/
-└── ...
-
-````
+    ├── Dockerfile
+    ├── docker-compose.yml
+    ├── src/
+    └── ...
+```
 
 ---
 
 ### 🧪 Steps to Run
 
-1. Open your terminal and navigate to the root project directory:
+1. Open your terminal and navigate to the project directory:
 
    ```bash
    cd Note-Application/notes
-````
+   ```
 
 2. Build and run the containers using Docker Compose:
 
@@ -63,7 +57,7 @@ Note-Application/
    docker-compose up --build
    ```
 
-3. Once the containers are running, the backend will be available at:
+3. The backend API will be available at:
 
    ```
    http://localhost:8080
@@ -79,7 +73,7 @@ Note-Application/
 
 ## 🔐 Forgot Password API Example
 
-Use `/api/auth/forgot-password` to initiate the password reset flow.
+Use `/api/auth/forgot-password` to initiate the password reset flow.  
 You’ll receive a reset code via email after posting a valid request.
 
 ![Forgot Password API Example](Screenshot%202025-07-17%20224852.png)
@@ -88,8 +82,8 @@ You’ll receive a reset code via email after posting a valid request.
 
 ## 👤 Author
 
-* **Name:** Khaled Ahmed Fathy
-* **Email:** [khaledelsbaey5@gmail.com](mailto:khaledelsbaey5@gmail.com)
+- **Name:** Khaled Ahmed Fathy  
+- **Email:** khaledelsbaey5@gmail.com
 
 ---
 
@@ -100,10 +94,3 @@ This project is open source. Add your license here (e.g., MIT or Apache 2.0).
 ---
 
 > For support or contributions, feel free to contact me at the email above.
-
-```
-
----
-
-Let me know if you also want me to write or review the `Dockerfile` and `docker-compose.yml` contents inside `notes/`.
-```
