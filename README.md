@@ -1,74 +1,109 @@
+
+
+### ✅ README Section (Docker-Only Setup)
+
+```markdown
 # Notes Management API
 
-The **Notes Management API** is a backend-only system built with Java Spring Boot. It provides RESTful APIs that allow users and admins to create, update, delete, and view notes, with advanced security features such as JWT authentication, profile update, and password reset.
+The **Notes Management API** is a backend-only system built with Java Spring Boot. It provides RESTful APIs that allow users and admins to create, update, delete, and view notes, with advanced security features such as JWT authentication, profile updates, and password resets.
 
 ---
 
 ## 🚀 Features
 
-- Add, create, delete, and update notes by users and admin.
-- Forgot password functionality.
-- Update user profile information.
-- Secure operations with JWT token authentication.
-- Data storage with PostgreSQL.
-- RESTful endpoints, ready for integration with any frontend.
-- Role-based access for users and admins.
+- Create, update, delete, and view notes (users & admins).
+- Forgot password functionality via email.
+- JWT-based secure authentication and role management.
+- PostgreSQL (latest) used as database.
+- Fully containerized using Docker.
 
 ---
 
 ## ⚙️ Technologies Used
 
-- **Java 21**
+- **Java 22**
 - **Spring Boot**
-- **PostgreSQL**
-- **JWT for Authentication & Authorization**
+- **PostgreSQL (latest)**
+- **JWT for Authentication**
+- **Docker**
 
 ---
 
-## ℹ️ Getting Started
+## 🐳 Running with Docker
 
-1. **Install Java 21** on your machine.
-2. **Set up a PostgreSQL database** and create a dedicated database for the project.
-3. Configure your database connection details in the `application.properties` or `application.yml` file.
-4. Run the project with:
+> This project runs entirely inside Docker.  
+> All Docker-related files (e.g., `Dockerfile`, `docker-compose.yml`) are inside the `notes/` folder.
+
+### 📁 Folder Structure
+
+```
+
+Note-Application/
+└── notes/
+├── Dockerfile
+├── docker-compose.yml
+├── src/
+└── ...
+
+````
+
+---
+
+### 🧪 Steps to Run
+
+1. Open your terminal and navigate to the root project directory:
+
    ```bash
-   ./mvnw spring-boot:run
+   cd Note-Application/notes
+````
+
+2. Build and run the containers using Docker Compose:
+
+   ```bash
+   docker-compose up --build
    ```
-5. Test the APIs using Postman or any API testing tool.
+
+3. Once the containers are running, the backend will be available at:
+
+   ```
+   http://localhost:8080
+   ```
 
 ---
 
 ## 🎯 Example: Login Request (Postman)
 
-
-![Screenshot 2025-06-17 011534](https://github.com/user-attachments/assets/5fe8c978-237b-4938-a09e-afa84b9ee267)
+![Login Screenshot](https://github.com/user-attachments/assets/5fe8c978-237b-4938-a09e-afa84b9ee267)
 
 ---
+
 ## 🔐 Forgot Password API Example
 
-This is an example of sending a POST request to the `/api/auth/forgot-password` endpoint using Postman.  
-After sending the email, you'll receive a reset code sent to your email address.
+Use `/api/auth/forgot-password` to initiate the password reset flow.
+You’ll receive a reset code via email after posting a valid request.
 
 ![Forgot Password API Example](Screenshot%202025-07-17%20224852.png)
-
-## 🔗 Open Resources
-
-- All resources are open for use and modification.
-- You are welcome to contribute or use this project for educational or commercial purposes according to the project license.
 
 ---
 
 ## 👤 Author
 
-- **Name:** Khaled Ahmed Fathy  
-- **Email:** khaledelsbaey5@gmail.com
+* **Name:** Khaled Ahmed Fathy
+* **Email:** [khaledelsbaey5@gmail.com](mailto:khaledelsbaey5@gmail.com)
 
 ---
 
 ## 📄 License
 
-This project is open source. You can add your license here (e.g., MIT or Apache 2.0).
+This project is open source. Add your license here (e.g., MIT or Apache 2.0).
 
 ---
 
-> For questions or contributions, feel free to contact me via the email above.
+> For support or contributions, feel free to contact me at the email above.
+
+```
+
+---
+
+Let me know if you also want me to write or review the `Dockerfile` and `docker-compose.yml` contents inside `notes/`.
+```
