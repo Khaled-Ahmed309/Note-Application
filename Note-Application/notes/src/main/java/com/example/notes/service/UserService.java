@@ -61,6 +61,13 @@ public class UserService {
     public void register(UserDTO userDTO){
         try {
             UserEntity user = new UserEntity();
+            UserEntity user1=userRepository.findByEmail(userDTO.getEmail());
+            if (user1!=null){
+                throw new RuntimeException("User is already registered , try again with another email");
+            }
+            log.info("The user name is: {}",userDTO.getName());
+            log.info("The user email is: {}",userDTO.getEmail());
+
             user.setName(userDTO.getName());
             user.setEmail(userDTO.getEmail());
             user.setPassword(passwordEncoder.encode(userDTO.getPassword()));

@@ -1,0 +1,36 @@
+version: "3.7"
+services:
+  db:
+    image: postgres:17
+    container_name: pg_container
+    environment:
+      POSTGRES_USER: khaled
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: notespplication
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - mynet
+  app:
+    build: .
+    container_name: spring_app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/notespplication
+      SPRING_DATASOURCE_USERNAME: khaled
+      SPRING_DATASOURCE_PASSWORD: 12345
+    networks:
+      - mynet
+volumes:
+  pg_data:
+networks:
+  mynet:
+    driver: bridge
+
+
+

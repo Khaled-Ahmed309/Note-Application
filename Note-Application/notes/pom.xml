@@ -27,7 +27,7 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>21</java.version>
+		<java.version>22</java.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -122,6 +122,7 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		<finalName>note-app</finalName>
 	</build>
 
 </project>
