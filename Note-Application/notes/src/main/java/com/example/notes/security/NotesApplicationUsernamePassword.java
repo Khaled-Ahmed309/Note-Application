@@ -4,6 +4,7 @@ package com.example.notes.security;
 import com.example.notes.model.Roles;
 import com.example.notes.model.UserEntity;
 import com.example.notes.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Component
 public class NotesApplicationUsernamePassword implements AuthenticationProvider {
 
@@ -35,6 +37,8 @@ public class NotesApplicationUsernamePassword implements AuthenticationProvider 
         UserEntity user=userRepository.findByEmail(email);
         if (user!=null&&user.getUserId()>0&& passwordEncoder.matches(pwd,user.getPassword()))
         {
+            log.info("The user name is: {}",user.getName());
+            log.info("The user email is: {}",user.getEmail());
             return new UsernamePasswordAuthenticationToken(user,null,getAuthorities(user.getRoles()));
         }
             throw new BadCredentialsException("Invalid credentials, password or username is incorrect");
